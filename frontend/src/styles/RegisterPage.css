@@ -1,0 +1,168 @@
+
+.register-container {
+  height: 100vh;
+  width: 100vw;
+  background: url('/neon-bg.jpg') no-repeat center center fixed;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', sans-serif;
+  padding: 20px;
+}
+
+.register-box {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2rem 2.5rem;
+  border-radius: 20px;
+  box-shadow: 0 0 40px #0ff;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  color: white;
+}
+
+.register-box h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.input-group {
+  position: relative;
+  margin-bottom: 1.2rem;
+  text-align: left;
+}
+
+.input-group .icon {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  color: #0ff;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+}
+
+.input-group input::placeholder {
+  color: #ccc;
+}
+
+.input-group input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.2);
+}
+.role-toggle-wrapper {
+  text-align: center;
+  margin: 1.2rem 0 1.5rem;
+}
+
+.role-toggle-label {
+  font-size: 0.95rem;
+  color: #0ff;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.role-toggle-switch {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+.role-option {
+  padding: 6px 16px;
+  border: 1px solid #0ff;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #ccc;
+  cursor: pointer;
+  transition: 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.role-option:hover {
+  background: rgba(0, 255, 255, 0.1);
+}
+
+.role-option.active {
+  background: #0ff;
+  color: black;
+  font-weight: bold;
+  box-shadow: 0 0 10px #0ff;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(to right, #0ff, #09f);
+  border: none;
+  border-radius: 10px;
+  color: black;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.submit-btn:hover {
+  background: linear-gradient(to right, #09f, #0ff);
+}
+
+.switch-text {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.switch-text a {
+  color: #0ff;
+  text-decoration: underline;
+}
+.form-box {
+  width: 100%;
+  max-width: 400px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 15px;
+  padding: 40px;
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
+  text-align: center;
+  color: white;
+}
+
+.input-box {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 12px 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+  width: 100%; /* 🛠 Ensures input doesn't overflow */
+  color: white;
+}
+
+.input-box input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 10px;
+  color: white;
+  font-size: 14px;
+  width: 100%;
+}
+
+.input-box svg {
+  margin-right: 10px;
+  color: #0ff;
+  font-size: 16px;
+}

@@ -1,0 +1,122 @@
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body, html {
+  height: 100%;
+  width: 100%;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+
+.login-container {                                                    
+  height: 100vh;
+  width: 100vw;
+  background: url('./neon-bg.jpg') no-repeat center center fixed;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Segoe UI', sans-serif;
+  padding: 20px;
+}
+
+
+.login-box {
+  background: rgba(0, 0, 0, 0.6);
+  padding: 2rem 2.5rem;
+  border-radius: 20px;
+  box-shadow: 0 0 40px #0ff;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.login-box h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+
+.input-group {
+  position: relative;
+  margin-bottom: 1.2rem;
+  text-align: left;
+}
+
+.input-group .icon {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  color: #0ff;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  border: none;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+}
+
+.input-group input::placeholder {
+  color: #ccc;
+}
+
+.input-group input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: linear-gradient(to right, #0ff, #09f);
+  border: none;
+  border-radius: 10px;
+  color: black;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.submit-btn:hover {
+  background: linear-gradient(to right, #09f, #0ff);
+}
+
+.switch-text {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.switch-text a {
+  color: #0ff;
+  text-decoration: underline;
+  font-weight: 500;
+}
+
+
+@media screen and (max-width: 480px) {
+  .login-box {
+    padding: 1.5rem;
+    border-radius: 15px;
+  }
+
+  .login-box h2 {
+    font-size: 1.6rem;
+  }
+
+  .submit-btn {
+    font-size: 0.95rem;
+  }
+}

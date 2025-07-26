@@ -1,0 +1,119 @@
+.admin-login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: url('/neon-bg.jpg') no-repeat center center fixed;
+  background-size: cover;
+  padding: 20px;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.admin-login-card {
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 20px;
+  box-shadow: 0 0 40px #0ff;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 2rem 2.5rem;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  color: white;
+}
+
+/* App title with logo */
+.app-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #0ff;
+  margin-bottom: 0.5rem;
+}
+
+/* Subtitle: Admin Login */
+.admin-login-card h2 {
+  font-size: 1.5rem;
+  color: #38bdf8;
+  margin-bottom: 1.5rem;
+}
+
+/* Error message */
+.admin-login-error {
+  color: #f87171;
+  background: rgba(255, 0, 0, 0.1);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+}
+
+/* Form styling */
+.admin-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.admin-login-form input {
+  padding: 12px 15px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 1rem;
+  outline: none;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.admin-login-form input::placeholder {
+  color: #ccc;
+}
+
+.admin-login-form input:focus {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.02);
+}
+
+/* Button styling */
+.admin-login-form button {
+  padding: 12px 15px;
+  background: linear-gradient(to right, #0ff, #09f);
+  border: none;
+  border-radius: 10px;
+  color: black;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.admin-login-form button:hover {
+  background: linear-gradient(to right, #09f, #0ff);
+  transform: scale(1.03);
+}
+
+.admin-login-form button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .admin-login-card {
+    padding: 1.5rem;
+    border-radius: 15px;
+  }
+
+  .app-title {
+    font-size: 1.6rem;
+  }
+
+  .admin-login-card h2 {
+    font-size: 1.3rem;
+  }
+
+  .admin-login-form button {
+    font-size: 0.95rem;
+  }
+}
+

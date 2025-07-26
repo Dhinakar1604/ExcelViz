@@ -1,0 +1,118 @@
+
+.admin-uploads-container {
+  padding: 20px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a, #164e63);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.admin-uploads-container h1 {
+  color: #22d3ee;
+  font-size: 2rem;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-uploads-container input {
+  padding: 10px 15px;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #e2e8f0;
+  margin-bottom: 20px;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.3s, box-shadow 0.3s;
+}
+
+.admin-uploads-container input:focus {
+  border-color: #22d3ee;
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.2);
+}
+
+.admin-uploads-container table {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  overflow: hidden;
+  color: #e2e8f0;
+  max-width: 1000px;
+}
+
+.admin-uploads-container th,
+.admin-uploads-container td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.admin-uploads-container thead {
+  background: rgba(255, 255, 255, 0.05);
+  color: #22d3ee;
+}
+
+.admin-uploads-container tbody tr {
+  transition: background 0.3s ease;
+}
+
+.admin-uploads-container tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-uploads-container tbody tr:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.admin-uploads-container button {
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.3s ease, transform 0.2s ease;
+  margin-right: 6px;
+}
+
+
+.admin-uploads-container .analyze-btn {
+  background-color: #22d3ee;
+  color: #0f172a;
+}
+
+.admin-uploads-container .analyze-btn:hover {
+  background-color: #06b6d4;
+  transform: scale(1.05);
+}
+
+.admin-uploads-container .delete-btn {
+  background-color: #ef4444;
+  color: #f9fafb;
+}
+
+.admin-uploads-container .delete-btn:hover {
+  background-color: #dc2626;
+  transform: scale(1.05);
+}
+
+@media screen and (max-width: 768px) {
+  .admin-uploads-container table {
+    font-size: 0.9rem;
+  }
+
+  .admin-uploads-container th,
+  .admin-uploads-container td {
+    padding: 8px;
+  }
+
+  .admin-uploads-container button {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+}

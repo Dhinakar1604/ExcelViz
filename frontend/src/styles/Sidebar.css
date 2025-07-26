@@ -1,0 +1,136 @@
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 260px;
+  background: rgba(9, 15, 40, 0.8);
+  backdrop-filter: blur(14px);
+  color: #e0e0e0;
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 1000;
+  box-shadow: 2px 0 12px rgba(0, 0, 0, 0.4);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  font-weight: 600;
+  font-size: 1.3rem;
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  color: #ffffff;
+  cursor: pointer;
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.close-btn:hover {
+  transform: scale(1.2);
+  color: #00bfff;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px 20px;
+}
+
+.sidebar-nav a,
+.sidebar-nav button {
+  background: none;
+  border: none;
+  color: #cfd8dc;
+  text-decoration: none;
+  font-size: 1rem;
+  padding: 10px 16px;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.sidebar-nav a:hover,
+.sidebar-nav button:hover {
+  background: rgba(0, 191, 255, 0.12);
+  color: #00bfff;
+}
+
+.logout-btn {
+  background: #ff4d4d;
+  border: none;
+  color: white;
+  font-size: 1rem;
+  margin: 20px;
+  padding: 12px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.25s ease, transform 0.2s ease;
+}
+
+.logout-btn:hover {
+  background: #e04343;
+  transform: scale(1.02);
+}
+
+.user-panel-btn {
+  background: none;
+  border: none;
+  color: #cfd8dc;
+  cursor: pointer;
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 1rem;
+  border-radius: 8px;
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.user-panel-btn:hover {
+  background: rgba(0, 191, 255, 0.12);
+  color: #00bfff;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 220px;
+  }
+
+  .sidebar-header {
+    font-size: 1.1rem;
+  }
+
+  .sidebar-nav a,
+  .sidebar-nav button {
+    font-size: 0.95rem;
+  }
+}
+.saved-analyses-btn {
+  background: none;
+  border: none;
+  color: #e2e8f0;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 8px 0;
+  transition: color 0.3s;
+}
+
+.saved-analyses-btn:hover {
+  color: #38bdf8;
+}

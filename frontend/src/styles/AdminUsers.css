@@ -1,0 +1,47 @@
+.admin-users-container {
+  padding: 20px;
+  color: #e2e8f0;
+  background: #0f172a;
+  min-height: 100vh;
+}
+.admin-users-container h1 {
+  font-size: 1.8rem;
+  margin-bottom: 15px;
+  color: #38bdf8;
+}
+.admin-users-container input {
+  padding: 10px;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  background: #1e293b;
+  color: #e2e8f0;
+  margin-bottom: 20px;
+}
+.admin-users-container table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #1e293b;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.admin-users-container th, .admin-users-container td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #334155;
+}
+.admin-users-container tr:hover {
+  background: #334155;
+}
+.admin-users-container button {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.admin-users-container button:hover {
+  background: #dc2626;
+}
