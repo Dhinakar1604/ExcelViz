@@ -5,6 +5,7 @@ const analysisSchema = new mongoose.Schema({
   fileId: { type: mongoose.Schema.Types.ObjectId, ref: 'UploadedFile', required: true },
   xAxis: { type: String, required: true },
   yAxis: { type: String, required: true },
+  zAxis: { type: String }, 
   chartTitle: { type: String },
   chartType: { type: String, required: true },
   chartData: { type: Object, required: true },

@@ -10,5 +10,6 @@ router.get('/history', protect, analysisController.getUserChartHistory)
 router.get('/user-stats', protect, analysisController.getUserStats);
 router.get('/:id', protect, analysisController.getAnalysisById);
 router.delete('/:id', protect, analysisController.deleteAnalysisById);
+router.post('/summary', protect, analysisController.generateSummary);
 
 module.exports = router;

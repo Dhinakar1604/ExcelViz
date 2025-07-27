@@ -1,13 +1,12 @@
-// ====== backend/models/ChartHistory.js ======
-const mongoose = require('mongoose'); // ✅ Add this line
+const mongoose = require('mongoose');
 
-const chartHistorySchema = new mongoose.Schema({
-  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  chartType: String,
-  xAxis: String,
-  yAxis: String,
-  fileRef: String,
-  createdAt: { type: Date, default: Date.now },
-});
+const ChartHistorySchema = new mongoose.Schema({
+  chartType: { type: String, required: true },
+  xAxis: { type: String, required: true },
+  yAxis: { type: String, required: true },
+  zAxis: { type: String }, // ✅ Added for 3D
+  fileRef: { type: mongoose.Schema.Types.ObjectId, ref: 'Upload', required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+}, { timestamps: true });
 
-module.exports = mongoose.model('ChartHistory', chartHistorySchema);
+module.exports = mongoose.model('ChartHistory', ChartHistorySchema);

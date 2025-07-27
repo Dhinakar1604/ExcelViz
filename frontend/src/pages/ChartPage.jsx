@@ -12,7 +12,8 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-import Plotly3DChart from "../components/Plotly3DChart";
+
+import ChartCanvas3D from "../components/chartcanvas3D";
 import "../styles/ChartPage.css";
 
 ChartJS.register(
@@ -33,8 +34,12 @@ const ChartPage = () => {
   const [chartType, setChartType] = useState("Bar Chart");
   const [xAxis, setXAxis] = useState("");
   const [yAxis, setYAxis] = useState("");
+  const [zAxis, setZAxis] = useState("");
   const [columns, setColumns] = useState([]);
   const [chartData, setChartData] = useState(null);
+  const [summary, setSummary] = useState("");
+const [loadingSummary, setLoadingSummary] = useState(false);
+
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -61,9 +66,12 @@ const ChartPage = () => {
   const fetchFileColumns = async (fileId) => {
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get(`http://localhost:5000/api/upload/columns/${fileId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await axios.get(
+        `http://localhost:5000/api/upload/columns/${fileId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       setColumns(res.data.columns);
     } catch (error) {
       console.error(error);
@@ -72,34 +80,58 @@ const ChartPage = () => {
   };
 
   const generateChart = async () => {
-    if (!selectedFile || !xAxis || !yAxis) {
-      alert("Select file, X, and Y axes.");
+    if (!selectedFile || !xAxis || !yAxis || (chartType.includes("3D") && !zAxis)) {
+      alert("Please select all required axes.");
       return;
     }
 
     setLoading(true);
+
     try {
       const token = localStorage.getItem("token");
       const res = await axios.post(
         "http://localhost:5000/api/analysis/generate",
-        { fileId: selectedFile, xAxis, yAxis, chartTitle, chartType },
+        {
+          fileId: selectedFile,
+          xAxis,
+          yAxis,
+          zAxis: chartType.includes("3D") ? zAxis : null,
+          chartTitle,
+          chartType,
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       const raw = res.data.chartData;
+      const xData = res.data.xData || raw.labels;
+      const yData = res.data.yData || raw.datasets?.[0]?.data || [];
+      const zData = chartType.includes("3D")
+        ? res.data.zData && res.data.zData.length > 0
+          ? res.data.zData
+          : yData
+        : [];
+
       const colors = raw.labels.map(
         () => `hsl(${Math.floor(Math.random() * 360)}, 70%, 60%)`
       );
 
+      const dataset = {
+        ...raw.datasets[0],
+        backgroundColor: colors,
+        borderColor: colors,
+        pointBackgroundColor: colors,
+        showLine: chartType === "Line Chart",
+        tension: 0.4,
+      };
+
       const updatedChartData = {
-        ...raw,
-        datasets: [
-          {
-            ...raw.datasets[0],
-            backgroundColor: colors,
-          },
-        ],
+        labels: raw.labels,
+        datasets: [dataset],
+        xData,
+        yData,
+        zData,
         options: {
+          responsive: true,
           plugins: {
             legend: { labels: { color: "#ffffff" } },
             title: {
@@ -113,10 +145,12 @@ const ChartPage = () => {
             x: {
               ticks: { color: "#ffffff" },
               grid: { color: "rgba(255,255,255,0.1)" },
+              title: { display: true, text: xAxis, color: "#ffffff" },
             },
             y: {
               ticks: { color: "#ffffff" },
               grid: { color: "rgba(255,255,255,0.1)" },
+              title: { display: true, text: yAxis, color: "#ffffff" },
             },
           },
         },
@@ -140,6 +174,7 @@ const ChartPage = () => {
           fileId: selectedFile,
           xAxis,
           yAxis,
+          zAxis: chartType.includes("3D") ? zAxis : null,
           chartTitle,
           chartType,
           chartData,
@@ -153,6 +188,75 @@ const ChartPage = () => {
     }
   };
 
+  const generateSummary = async () => {
+  if (!selectedFile || !chartTitle || !chartType || !xAxis || !yAxis || !chartData) {
+    alert("Please generate a chart before requesting a summary.");
+    return;
+  }
+
+  setLoadingSummary(true);
+
+  try {
+    const token = localStorage.getItem("token");
+    const res = await axios.post(
+      "http://localhost:5000/api/analysis/summary",
+      {
+        fileId: selectedFile,
+        chartTitle,
+        chartType,
+        xAxis,
+        yAxis,
+        chartData,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    setSummary(res.data.summary);
+  } catch (error) {
+    console.error("AI Summary Error:", error);
+    alert("Failed to generate AI summary.");
+  } finally {
+    setLoadingSummary(false);
+  }
+};
+
+  const renderChart = () => {
+    if (!chartData) return null;
+
+    console.log("✅ 3D Chart Axis Data:", {
+      x: chartData.xData,
+      y: chartData.yData,
+      z: chartData.zData,
+    });
+
+    const commonProps = { data: chartData, options: chartData.options };
+
+    switch (chartType) {
+      case "Bar Chart":
+        return <Bar {...commonProps} />;
+      case "Line Chart":
+        return <Line {...commonProps} />;
+      case "Pie Chart":
+        return <Pie {...commonProps} />;
+      case "Doughnut Chart":
+        return <Doughnut {...commonProps} />;
+   case "3D Bar Chart":
+  case "3D Line Chart":
+    return (
+      <ChartCanvas3D
+        chartType={chartType} 
+        chartData={chartData}
+        chartTitle={chartTitle}
+      />
+    );
+
+  default:
+    return <p>Unsupported chart type</p>;
+}
+  };
+
   return (
     <div className="chart-page">
       <div className="chart-container">
@@ -160,7 +264,10 @@ const ChartPage = () => {
           <h2>📊 Create & Visualize Your Analysis</h2>
 
           <label>Select Uploaded Excel File</label>
-          <select value={selectedFile} onChange={(e) => setSelectedFile(e.target.value)}>
+          <select
+            value={selectedFile}
+            onChange={(e) => setSelectedFile(e.target.value)}
+          >
             <option value="">Select Uploaded Excel File</option>
             {files.map((file) => (
               <option key={file._id} value={file._id}>
@@ -178,14 +285,16 @@ const ChartPage = () => {
           />
 
           <label>Chart Type</label>
-          <select value={chartType} onChange={(e) => setChartType(e.target.value)}>
-            <option>Bar Chart</option>
-            <option>Line Chart</option>
-            <option>Pie Chart</option>
-            <option>Doughnut Chart</option>
-            <option>3D Bar Chart</option>
-            <option>3D Line Chart</option>
-            <option>3D Pie Chart</option>
+          <select
+            value={chartType}
+            onChange={(e) => setChartType(e.target.value)}
+          >
+            <option value="Bar Chart">Bar Chart</option>
+            <option value="Line Chart">Line Chart</option>
+            <option value="Pie Chart">Pie Chart</option>
+            <option value="Doughnut Chart">Doughnut Chart</option>
+            <option value="3D Bar Chart">3D Bar Chart</option>
+            <option value="3D Line Chart">3D Line Chart</option>
           </select>
 
           <label>Select X-Axis Column</label>
@@ -197,7 +306,6 @@ const ChartPage = () => {
               </option>
             ))}
           </select>
-          
 
           <label>Select Y-Axis Column</label>
           <select value={yAxis} onChange={(e) => setYAxis(e.target.value)}>
@@ -209,40 +317,51 @@ const ChartPage = () => {
             ))}
           </select>
 
+          {chartType.includes("3D") && (
+            <>
+              <label>Select Z-Axis Column</label>
+              <select value={zAxis} onChange={(e) => setZAxis(e.target.value)}>
+                <option value="">Select Z Axis</option>
+                {columns.map((col) => (
+                  <option key={col} value={col}>
+                    {col}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+
           <button onClick={generateChart} disabled={loading}>
             {loading ? "Generating..." : "Generate Chart"}
           </button>
           <button onClick={saveAnalysis}>Save Analysis</button>
+          <button onClick={generateSummary}>Generate AI Summary</button>
         </div>
 
-        <div className="chart-display">
-          {chartData ? (
-            <>
-              {!chartType.includes("3D") && chartType === "Bar Chart" && (
-                <Bar data={chartData} options={chartData.options} />
-              )}
-              {!chartType.includes("3D") && chartType === "Line Chart" && (
-                <Line data={chartData} options={chartData.options} />
-              )}
-              {!chartType.includes("3D") && chartType === "Pie Chart" && (
-                <Pie data={chartData} options={chartData.options} />
-              )}
-              {!chartType.includes("3D") && chartType === "Doughnut Chart" && (
-                <Doughnut data={chartData} options={chartData.options} />
-              )}
-              {chartType.includes("3D") && (
-                <Plotly3DChart
-                  type={chartType}
-                  labels={chartData.labels}
-                  values={chartData.datasets[0].data}
-                  title={chartTitle}
-                />
-              )}
-            </>
-          ) : (
-            <p className="no-chart-text">📈 No Charts Yet</p>
-          )}
-        </div>
+  <div className="chart-page">
+  <div className="main-wrapper">
+    <div className="chart-container">
+     
+      <div className="left-column">
+        <div className="chart-form"></div>
+      </div>
+
+      <div className="right-column">
+        <div className="chart-display">{renderChart()}</div>
+      </div>
+    </div>
+
+    {summary && (
+      <div className="ai-summary-section">
+        <h3>🧠 AI Summary</h3>
+        <p>{summary}</p>
+      </div>
+    )}
+  </div>
+</div>
+
+
+
       </div>
     </div>
   );
