@@ -1,15 +1,13 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaEnvelope, FaLock } from "react-icons/fa";
-import "../styles/LoginPage.css"; 
-
+import "../styles/LoginPage.css";
+import { ToastContainer, toast } from "react-toastify";
 import { jwtDecode } from "jwt-decode";
+import "react-toastify/dist/ReactToastify.css";
 
 const LoginPage = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -35,25 +33,49 @@ const LoginPage = () => {
         const role = decoded.role || "user";
         const name = decoded.userName || decoded.name || "User";
 
-        alert("✅ Login successful!");
+        toast.success("Logged in successfully!", {
+          style: {
+            background: "#111111",
+            color: "#ffffff",
+            border: "1px solid #333",
+            fontWeight: "bold",
+            fontSize: "14px",
+          },
+        });
 
-        if (role === "admin") {
-          localStorage.setItem("adminToken", token);
-          localStorage.setItem("adminName", name);
-          localStorage.setItem("adminRole", "admin");
-          navigate("/admin-dashboard");
-        } else {
-          localStorage.setItem("token", token);
-          localStorage.setItem("userName", name);
-          localStorage.setItem("userRole", "user");
-          navigate("/dashboard");
-        }
+        setTimeout(() => {
+          if (role === "admin") {
+            localStorage.setItem("adminToken", token);
+            localStorage.setItem("adminName", name);
+            localStorage.setItem("adminRole", "admin");
+            navigate("/admin-dashboard");
+          } else {
+            localStorage.setItem("token", token);
+            localStorage.setItem("userName", name);
+            localStorage.setItem("userRole", "user");
+            navigate("/dashboard");
+          }
+        }, 3000);
       } else {
-        alert(`❌ Login failed: ${data.message || "Invalid credentials"}`);
+        toast.error(`Login failed: ${data.message || "Invalid credentials"}`, {
+          style: {
+            background: "#1a1a1a",
+            color: "#ff4d4f",
+            border: "1px solid #660000",
+            fontWeight: "bold",
+          },
+        });
       }
     } catch (err) {
       console.error("Login Error:", err);
-      alert("❌ Server error during login.");
+      toast.error("❌ Server error during login.", {
+        style: {
+          background: "#1a1a1a",
+          color: "#ff4d4f",
+          border: "1px solid #660000",
+          fontWeight: "bold",
+        },
+      });
     } finally {
       setLoading(false);
     }
@@ -61,9 +83,11 @@ const LoginPage = () => {
 
   return (
     <div className="login-container">
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+
       <header className="text-center mb-6 mt-4">
         <h1 className="text-4xl font-extrabold text-cyan-300 drop-shadow-lg tracking-wide">
-          📊EXCEL VIZ
+          📊 EXCEL VIZ
         </h1>
       </header>
 
@@ -99,8 +123,7 @@ const LoginPage = () => {
         </form>
 
         <p className="switch-text">
-          Don’t have an account?{" "}
-          <Link to="/register">Register</Link>
+          Don’t have an account? <Link to="/register">Register</Link>
         </p>
       </div>
     </div>

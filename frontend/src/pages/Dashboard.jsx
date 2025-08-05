@@ -2,6 +2,8 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Dashboard.css";
 import Sidebar from "../components/Sidebar";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -12,15 +14,15 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [fileToDelete, setFileToDelete] = useState(null);
 
-useEffect(() => {
+  useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/login");
       return;
     }
 
-    // Ensure userName consistency
     const storedName = localStorage.getItem("userName");
     if (!storedName || storedName === "undefined") {
       try {
@@ -50,16 +52,9 @@ useEffect(() => {
         const filesData = await filesRes.json();
         const statsData = await statsRes.json();
 
-        if (filesData.files) {
-          setRecentFiles(filesData.files);
-          setFilesUploaded(filesData.files.length);
-        } else {
-          setRecentFiles([]);
-          setFilesUploaded(0);
-        }
-
+        setRecentFiles(filesData.files || []);
+        setFilesUploaded(filesData.files?.length || 0);
         setChartsCreated(statsData.chartsCreated || 0);
-
       } catch (error) {
         console.error("Dashboard fetch error:", error);
       } finally {
@@ -68,50 +63,53 @@ useEffect(() => {
     };
 
     fetchDashboardData();
-}, [navigate]);
+  }, [navigate]);
 
   const handleLogout = useCallback(() => {
     localStorage.clear();
     navigate("/login");
-    window.location.reload(); 
+    window.location.reload();
   }, [navigate]);
 
-  const handleAnalyze = useCallback(
-    (file) => {
-      navigate("/charts", {
-        state: {
-          fileId: file._id || file.id || null,
-          fileName: file.name || null,
-        },
-      });
-    },
-    [navigate]
-  );
+  const handleAnalyze = useCallback((file) => {
+    navigate("/charts", {
+      state: {
+        fileId: file._id || file.id || null,
+        fileName: file.name || null,
+      },
+    });
+  }, [navigate]);
 
-  const handleDelete = useCallback(async (file) => {
-    const fileId = file?._id || file?.id;
-    if (!fileId) {
-      alert("Invalid file ID");
-      return;
-    }
+  const handleDelete = useCallback((file) => {
+    setFileToDelete(file);
+  }, []);
+
+  const confirmDelete = async () => {
+    if (!fileToDelete) return;
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5000/api/upload/${fileId}`, {
+      const res = await fetch(`http://localhost:5000/api/upload/${fileToDelete._id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
+
       if (!res.ok) throw new Error("Failed to delete");
-      setRecentFiles((prev) => prev.filter((f) => (f._id || f.id) !== fileId));
+
+      setRecentFiles((prev) => prev.filter((f) => (f._id || f.id) !== fileToDelete._id));
       setFilesUploaded((prev) => Math.max(prev - 1, 0));
+
+      toast.success(`"File Deleted Successfully`);
     } catch (error) {
       console.error("Delete error:", error);
-      alert("Error deleting file");
+      toast.error("Error deleting file");
+    } finally {
+      setFileToDelete(null);
     }
-  }, []);
+  };
 
-  const handleUploadClick = useCallback(() => {
-    navigate("/upload");
-  }, [navigate]);
+  const handleUploadClick = useCallback(() => navigate("/upload"), [navigate]);
+  const handleFilesUploadedClick = useCallback(() => navigate("/History"), [navigate]);
+  const handleChartsCreatedClick = useCallback(() => navigate("/saved-analyses"), [navigate]);
 
   const filteredFiles = recentFiles.filter((file) =>
     file.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -128,6 +126,7 @@ useEffect(() => {
           transition: "margin-left 0.3s ease",
         }}
       >
+        <ToastContainer position="top-right" autoClose={3000} theme="dark" />
         <header className="dashboard-header">
           <button
             className="menu-btn"
@@ -180,21 +179,17 @@ useEffect(() => {
               <p>Here's an overview of your Excel analytics</p>
 
               <div className="stats-cards">
-                <div
-                  className="card upload-card"
-                  onClick={handleUploadClick}
-                  style={{ cursor: "pointer" }}
-                >
+                <div className="card upload-card" onClick={handleUploadClick} style={{ cursor: "pointer" }}>
                   <h3>📥 Upload Excel File</h3>
                   <p>Import and analyze new data easily.</p>
                 </div>
 
-                <div className="card chart-card">
+                <div className="card chart-card" onClick={handleChartsCreatedClick} style={{ cursor: "pointer" }}>
                   <h3>{chartsCreated}</h3>
                   <p>Charts Created</p>
                 </div>
 
-                <div className="card file-card">
+                <div className="card file-card" onClick={handleFilesUploadedClick} style={{ cursor: "pointer" }}>
                   <h3>{filesUploaded}</h3>
                   <p>Files Uploaded</p>
                 </div>
@@ -239,6 +234,61 @@ useEffect(() => {
         </main>
         <footer className="dashboard-footer">© 2025 ExcelViz. All rights reserved.</footer>
       </div>
+
+      {/* Inline Confirmation Modal */}
+      {fileToDelete && (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="delete-dialog-title"
+          tabIndex={-1}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0,0,0,0.6)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+            padding: 20,
+          }}
+        >
+          <div
+            style={{
+              background: "#1e293b",
+              padding: "20px",
+              borderRadius: "8px",
+              textAlign: "center",
+              maxWidth: "90%",
+              width: "400px",
+              boxSizing: "border-box",
+              color: "white",
+            }}
+          >
+            <h3 id="delete-dialog-title">
+              Are you sure you want to delete <strong>{fileToDelete.name}</strong>?
+            </h3>
+            <p>This action cannot be undone.</p>
+            <div style={{ marginTop: "15px", display: "flex", justifyContent: "center", gap: "15px", flexWrap: "wrap" }}>
+              <button
+                onClick={confirmDelete}
+                style={{ background: "darkred", color: "#fff", padding: "8px 16px", borderRadius: 4, cursor: "pointer" }}
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setFileToDelete(null)}
+                style={{ padding: "8px 16px", borderRadius: 4, cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

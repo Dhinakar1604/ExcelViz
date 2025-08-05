@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FaUser, FaEnvelope, FaLock } from "react-icons/fa";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "../styles/RegisterPage.css";
 
 const RegisterPage = () => {
@@ -35,14 +37,38 @@ const RegisterPage = () => {
       const data = await res.json();
 
       if (res.ok) {
-        alert("✅ Registration successful! Please login.");
-        navigate("/login");
+        toast.success("Registration successful! Please login.", {
+          style: {
+            background: "#1f1f1f",
+            color: "#00ffcc",
+            border: "1px solid #333",
+            fontWeight: "bold",
+            fontSize: "14px",
+          },
+        });
+
+        setTimeout(() => {
+          navigate("/login");
+        }, 3000);
       } else {
-        alert(`❌ Registration failed: ${data.message || "Try again."}`);
+        toast.error(`Registration failed: ${data.message || "Try again."}`, {
+          style: {
+            background: "#1f1f1f",
+            color: "#ff4d4d",
+            fontWeight: "bold",
+            fontSize: "14px",
+          },
+        });
       }
     } catch (err) {
       console.error("❌ Server Error:", err);
-      alert("Server error. Please try again later.");
+      toast.error("❌ Server error. Please try again later.", {
+        style: {
+          background: "#1f1f1f",
+          color: "#ff4d4d",
+          fontWeight: "bold",
+        },
+      });
     } finally {
       setLoading(false);
     }
@@ -50,6 +76,7 @@ const RegisterPage = () => {
 
   return (
     <div className="register-container">
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
       <header className="text-center mb-6 mt-4">
         <h1 className="text-4xl font-extrabold text-cyan-300 drop-shadow-lg tracking-wide">
           📊EXCEL VIZ

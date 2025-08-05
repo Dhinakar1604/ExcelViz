@@ -1,15 +1,29 @@
 const express = require('express');
 const router = express.Router();
 const protect = require('../middlewares/authMiddleware');
-const analysisController = require('../controllers/analysisController');
+const { uploadPDF } = require('../middlewares/multerConfig');
 
-router.post('/generate', protect, analysisController.generateChart);
-router.post('/save', protect, analysisController.saveChart);
+const {
+  generateChart,
+  saveChart,
+  getUserChartHistory,
+  getUserStats,
+  getAnalysisById,
+  deleteAnalysisById,
+  generateSummary,
+  downloadPDFReport
+} = require('../controllers/analysisController');
 
-router.get('/history', protect, analysisController.getUserChartHistory)
-router.get('/user-stats', protect, analysisController.getUserStats);
-router.get('/:id', protect, analysisController.getAnalysisById);
-router.delete('/:id', protect, analysisController.deleteAnalysisById);
-router.post('/summary', protect, analysisController.generateSummary);
+const { uploadPDFReport } = require('../controllers/uploadController');
+
+router.post('/generate', protect, generateChart);
+router.post('/save', protect, saveChart);
+router.get('/history', protect, getUserChartHistory);
+router.get('/user-stats', protect, getUserStats);
+router.get('/:id', protect, getAnalysisById);
+router.delete('/:id', protect, deleteAnalysisById);
+router.post('/summary', protect, generateSummary);
+router.post('/download-report', protect, downloadPDFReport); 
+router.post('/upload-pdf', protect, uploadPDF.single('pdf'), uploadPDFReport); 
 
 module.exports = router;

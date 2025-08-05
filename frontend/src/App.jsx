@@ -12,11 +12,14 @@ import ChartPage from "./pages/ChartPage";
 import AdminUploads from "./pages/AdminUploads";
 import AdminUsers from "./pages/AdminUsers";
 import SavedAnalyses from "./pages/SavedAnalyses";
+import 'react-toastify/dist/ReactToastify.css';
 
 
 const App = () => {
   return (
+
     <Router>
+      
       <Routes>
        
         <Route path="/" element={<Navigate to="/login" replace />} />

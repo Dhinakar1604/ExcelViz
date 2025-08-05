@@ -1,20 +1,21 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import * as XLSX from "xlsx"; // for preview
+import * as XLSX from "xlsx";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "../styles/UploadPage.css";
 
 const UploadPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
-  const [uploadStatus, setUploadStatus] = useState("");
-  const [previewData, setPreviewData] = useState([]); // for preview
+  const [previewData, setPreviewData] = useState([]);
+  const [isUploaded, setIsUploaded] = useState(false);
   const navigate = useNavigate();
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setSelectedFile(file);
-    setUploadStatus("");
+    setIsUploaded(false);
 
-    // ✅ Generate Excel preview
     const reader = new FileReader();
     reader.onload = (evt) => {
       const data = evt.target.result;
@@ -22,14 +23,16 @@ const UploadPage = () => {
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       const json = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-      setPreviewData(json.slice(0, 5)); // show first 5 rows
+      setPreviewData(json.slice(0, 5));
     };
     reader.readAsBinaryString(file);
   };
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      setUploadStatus("❌ Please select a file before uploading.");
+      toast.error("Please select a file before uploading.", {
+        theme: "dark",
+      });
       return;
     }
 
@@ -38,7 +41,6 @@ const UploadPage = () => {
 
     try {
       const token = localStorage.getItem("token");
-
       const response = await fetch("http://localhost:5000/api/upload", {
         method: "POST",
         headers: {
@@ -51,18 +53,22 @@ const UploadPage = () => {
         throw new Error("Upload failed");
       }
 
-      setUploadStatus("✅ File uploaded successfully!");
-      setSelectedFile(null);
+      toast.success("File uploaded successfully!", {
+        theme: "dark",
+        autoClose: 3000,
+      });
 
-      // ✅ Remove immediate redirect; user will manually navigate after confirmation
+      setSelectedFile(null);
+      setIsUploaded(true);
     } catch (error) {
       console.error("Upload error:", error);
-      setUploadStatus("❌ Upload failed. Try again.");
+      toast.error("Upload failed. Try again.", { theme: "dark" });
     }
   };
 
   return (
     <div className="upload-container">
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
       <div className="upload-box">
         <h2>Upload Excel File</h2>
         <p>Upload your Excel file (.xls or .xlsx) to analyze and visualize your data</p>
@@ -84,9 +90,6 @@ const UploadPage = () => {
           Upload File
         </button>
 
-        {uploadStatus && <p className="upload-status">{uploadStatus}</p>}
-
-        {/* ✅ Show Excel preview table */}
         {previewData.length > 0 && (
           <div className="preview-table">
             <h3>📊 Preview of Uploaded File</h3>
@@ -101,18 +104,18 @@ const UploadPage = () => {
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
 
-        {/* ✅ Show "Go to Dashboard" after success */}
-        {uploadStatus.includes("success") && (
-          <button
-            className="upload-btn"
-            style={{ marginTop: "10px" }}
-            onClick={() => navigate("/dashboard")}
-          >
-            Go to Dashboard
-          </button>
+            {/* ✅ Place the Go to Dashboard button after the table */}
+            {isUploaded && (
+              <button
+                className="upload-btn"
+                onClick={() => navigate("/dashboard")}
+                style={{ marginTop: "20px" }}
+              >
+                Go to Dashboard
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -1,3 +1,8 @@
+.card.file-card:hover {
+  background-color: #1e293b;
+  transform: scale(1.02);
+  transition: all 0.2s ease;
+}
 
 .dashboard-container {
   display: flex;

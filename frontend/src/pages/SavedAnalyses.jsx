@@ -6,6 +6,8 @@ import Chart from "chart.js/auto";
 import Sidebar from "../components/Sidebar";
 import "../styles/SavedAnalyses.css";
 import ChartCanvas3D from "../components/chartcanvas3D";
+import { ToastContainer, toast } from "react-toastify";
+
 
 const SavedAnalyses = () => {
   const navigate = useNavigate();
@@ -13,13 +15,12 @@ const SavedAnalyses = () => {
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState(null);
-
-  // This ref wraps the entire chart container for html2canvas capture (works for both 2D & 3D)
+  const plotlyRef = useRef(null); 
   const chartContainerRef = useRef(null);
-
-  // This ref is for 2D Chart.js canvas only
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
+
+
 
   const [deleteId, setDeleteId] = useState(null);
 
@@ -44,8 +45,6 @@ const SavedAnalyses = () => {
     };
     fetchAnalyses();
   }, []);
-
-  // Initialize 2D Chart.js charts only
   useEffect(() => {
     if (!selectedAnalysis || selectedAnalysis.chartType.toLowerCase().includes("3d")) return;
 
@@ -60,35 +59,51 @@ const SavedAnalyses = () => {
       "doughnut chart": "doughnut",
     };
     const chartType = typeMap[selectedAnalysis.chartType.toLowerCase()] || selectedAnalysis.chartType.toLowerCase();
-
-    chartInstance.current = new Chart(chartRef.current, {
-      type: chartType,
-      data: selectedAnalysis.chartData,
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { labels: { color: "#e2e8f0" } },
-          title: {
-            display: true,
-            text: selectedAnalysis.chartTitle || "Analysis Chart",
-            color: "#f8fafc",
-          },
-        },
-        scales: {
-          x: {
-            ticks: { color: "#e2e8f0" },
-            grid: { color: "rgba(255,255,255,0.1)" },
-          },
-          y: {
-            ticks: { color: "#e2e8f0" },
-            grid: { color: "rgba(255,255,255,0.1)" },
-          },
-        },
+chartInstance.current = new Chart(chartRef.current, {
+  type: chartType,
+  data: selectedAnalysis.chartData,
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { labels: { color: "#e2e8f0" } },
+      title: {
+        display: true,
+        text: selectedAnalysis.chartTitle || "Analysis Chart",
+        color: "#f8fafc",
       },
-    });
-  }, [selectedAnalysis]);
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: selectedAnalysis.xAxis || "X Axis",
+          color: "#f8fafc",
+          font: {
+            size: 14,
+            weight: "bold",
+          },
+        },
+        ticks: { color: "#e2e8f0" },
+        grid: { color: "rgba(255,255,255,0.1)" },
+      },
+      y: {
+        title: {
+          display: true,
+          text: selectedAnalysis.yAxis || "Y Axis",
+          color: "#f8fafc",
+          font: {
+            size: 14,
+            weight: "bold",
+          },
+        },
+        ticks: { color: "#e2e8f0" },
+        grid: { color: "rgba(255,255,255,0.1)" },
+      },
+    },
+  },
+});
 
-  // Download handlers capture the entire chart container
+  }, [selectedAnalysis]);
   const handleDownloadPNG = async () => {
     if (!chartContainerRef.current) return alert("Chart container not available");
     try {
@@ -122,197 +137,230 @@ const SavedAnalyses = () => {
     }
   };
 
-  const handleDelete = async (id) => {
-    try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5000/api/analysis/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        setAnalyses((prev) => prev.filter((a) => a._id !== id));
-        setDeleteId(null);
-        if (selectedAnalysis?._id === id) setSelectedAnalysis(null);
-      } else {
-        console.error("Failed to delete analysis.");
-      }
-    } catch (err) {
-      console.error(err);
+const handleDelete = async (id) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`http://localhost:5000/api/analysis/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      setAnalyses((prev) => prev.filter((a) => a._id !== id));
+      setDeleteId(null);
+      if (selectedAnalysis?._id === id) setSelectedAnalysis(null);
+
+      toast.success("Analysis deleted successfully"); // ✅ show toast
+    } else {
+      toast.error("Failed to delete analysis");
     }
-  };
+  } catch (err) {
+    console.error(err);
+    toast.error("Something went wrong");
+  }
+};
 
-  return (
-    <div style={{ display: "flex" }}>
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      <div className="saved-analyses-container" style={{ flex: 1, padding: "20px", color: "#e2e8f0" }}>
-        <header className="dashboard-header">
-          <button onClick={() => setIsSidebarOpen(true)} className="sidebar-toggle-button" aria-label="Open sidebar">
-            ☰
-          </button>
-          <div className="logo-title saved-analyses-title">📊 Saved Analyses</div>
-        </header>
 
-        <main>
-          {loading ? (
-            <p>Loading your analyses...</p>
-          ) : analyses.length === 0 ? (
-            <p>No analyses saved yet.</p>
-          ) : (
-            <div className="analyses-list">
-              {analyses.map((analysis) => (
-                <div key={analysis._id} className="analysis-card" style={{ marginBottom: "15px" }}>
-                  <h3>{analysis.chartTitle || "Untitled Chart"}</h3>
-                  <p>Type: {analysis.chartType}</p>
-                  <button onClick={() => setSelectedAnalysis(analysis)} style={{ marginRight: "10px" }}>
-                    View
-                  </button>
-                  <button
-                    onClick={() => confirmDelete(analysis._id)}
-                    style={{ marginRight: "10px", background: "darkred", color: "#fff" }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </main>
+return (
+  <div style={{ display: "flex" }}>
+    {/* Sidebar */}
+    <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-        {/* Modal for viewing chart */}
-        {selectedAnalysis && (
+    {/* Main Content */}
+    <div className="saved-analyses-container" style={{ flex: 1, padding: "20px", color: "#e2e8f0" }}>
+      {/* ✅ Toast Container */}
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" />
+
+      {/* Header */}
+      <header className="dashboard-header">
+        <button
+          onClick={() => setIsSidebarOpen(true)}
+          className="sidebar-toggle-button"
+          aria-label="Open sidebar"
+        >
+          ☰
+        </button>
+        <div className="logo-title saved-analyses-title">📊 Saved Analyses</div>
+      </header>
+
+      {/* Main Section */}
+      <main>
+        {loading ? (
+          <p>Loading your analyses...</p>
+        ) : analyses.length === 0 ? (
+          <p>No analyses saved yet.</p>
+        ) : (
+          <div className="analyses-list">
+            {analyses.map((analysis) => (
+              <div key={analysis._id} className="analysis-card" style={{ marginBottom: "15px" }}>
+                <h3>{analysis.chartTitle || "Untitled Chart"}</h3>
+                <p>Type: {analysis.chartType}</p>
+                <button onClick={() => setSelectedAnalysis(analysis)} style={{ marginRight: "10px" }}>
+                  View
+                </button>
+                <button
+                  onClick={() => confirmDelete(analysis._id)}
+                  style={{ marginRight: "10px", background: "darkred", color: "#fff" }}
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+
+      {/* Modal for viewing chart */}
+      {selectedAnalysis && (
+        <div
+          className="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="chart-modal-title"
+          tabIndex={-1}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0,0,0,0.8)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+            overflowY: "auto",
+            padding: 20,
+          }}
+          onClick={(e) => {
+            if (e.target.classList.contains("modal")) {
+              setSelectedAnalysis(null);
+            }
+          }}
+        >
           <div
-            className="modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="chart-modal-title"
-            tabIndex={-1}
             style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
+              background: "#1e293b",
+              padding: "20px",
+              borderRadius: "8px",
+              maxWidth: "90%",
+              maxHeight: "90%",
               width: "100%",
-              height: "100%",
-              backgroundColor: "rgba(0,0,0,0.8)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              zIndex: 9999,
-              overflowY: "auto",
-              padding: 20,
-            }}
-            onClick={(e) => {
-              // Close modal if clicking outside content box
-              if (e.target.classList.contains("modal")) {
-                setSelectedAnalysis(null);
-              }
+              boxSizing: "border-box",
             }}
           >
+            <h2 id="chart-modal-title" style={{ marginBottom: 10 }}>
+              {selectedAnalysis.chartTitle || "Chart"}
+            </h2>
+
             <div
+              ref={chartContainerRef}
               style={{
-                background: "#1e293b",
-                padding: "20px",
-                borderRadius: "8px",
-                maxWidth: "90%",
-                maxHeight: "90%",
                 width: "100%",
-                boxSizing: "border-box",
+                height: "500px",
+                overflow: "auto",
+                backgroundColor: "#0f172a",
+                padding: 10,
+                borderRadius: 8,
               }}
             >
-              <h2 id="chart-modal-title" style={{ marginBottom: 10 }}>
-                {selectedAnalysis.chartTitle || "Chart"}
-              </h2>
-
-              <div
-                ref={chartContainerRef}
-                style={{
-                  maxWidth: "100%",
-                  maxHeight: "60vh",
-                  overflow: "auto",
-                  backgroundColor: "#0f172a",
-                  padding: 10,
-                  borderRadius: 4,
-                }}
-              >
-                {selectedAnalysis.chartType.toLowerCase().includes("3d") ? (
-                  <ChartCanvas3D
-                    chartTitle={selectedAnalysis.chartTitle}
-                    chartType={selectedAnalysis.chartType}
-                    chartData={selectedAnalysis.chartData}
-                  />
-                ) : (
-                  <canvas ref={chartRef} />
-                )}
-              </div>
-
-              <div style={{ marginTop: "15px", display: "flex", justifyContent: "center", gap: "15px", flexWrap: "wrap" }}>
-                <button onClick={handleDownloadPNG} style={{ padding: "8px 16px", cursor: "pointer" }}>
-                  Download PNG
-                </button>
-                <button onClick={handleDownloadPDF} style={{ padding: "8px 16px", cursor: "pointer" }}>
-                  Download PDF
-                </button>
-                <button onClick={() => setSelectedAnalysis(null)} style={{ padding: "8px 16px", cursor: "pointer" }}>
-                  Close
-                </button>
-              </div>
+              {selectedAnalysis.chartType.toLowerCase().includes("3d") ? (
+                <ChartCanvas3D
+                  chartTitle={selectedAnalysis.chartTitle}
+                  chartType={selectedAnalysis.chartType}
+                  chartData={selectedAnalysis.chartData}
+                  plotlyRef={plotlyRef}
+                />
+              ) : (
+                <canvas
+                  ref={chartRef}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    maxHeight: "500px",
+                    display: "block",
+                  }}
+                />
+              )}
             </div>
-          </div>
-        )}
 
-        {/* Delete confirmation dialog */}
-        {deleteId && (
-          <div
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="delete-dialog-title"
-            tabIndex={-1}
-            style={{
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: "100%",
-              height: "100%",
-              backgroundColor: "rgba(0,0,0,0.6)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              zIndex: 9999,
-              padding: 20,
-            }}
-          >
             <div
               style={{
-                background: "#1e293b",
-                padding: "20px",
-                borderRadius: "8px",
-                textAlign: "center",
-                maxWidth: "90%",
-                width: "400px",
-                boxSizing: "border-box",
+                marginTop: "15px",
+                display: "flex",
+                justifyContent: "center",
+                gap: "15px",
+                flexWrap: "wrap",
               }}
             >
-              <h3 id="delete-dialog-title">Are you sure you want to delete this analysis?</h3>
-              <p>This action cannot be undone.</p>
-              <div style={{ marginTop: "15px", display: "flex", justifyContent: "center", gap: "15px", flexWrap: "wrap" }}>
-                <button
-                  onClick={() => handleDelete(deleteId)}
-                  style={{ background: "darkred", color: "#fff", padding: "8px 16px", borderRadius: 4, cursor: "pointer" }}
-                >
-                  Yes, Delete
-                </button>
-                <button
-                  onClick={() => setDeleteId(null)}
-                  style={{ padding: "8px 16px", borderRadius: 4, cursor: "pointer" }}
-                >
-                  Cancel
-                </button>
-              </div>
+              <button onClick={handleDownloadPNG} style={{ padding: "8px 16px", cursor: "pointer" }}>
+                Download PNG
+              </button>
+              <button onClick={handleDownloadPDF} style={{ padding: "8px 16px", cursor: "pointer" }}>
+                Download PDF
+              </button>
+              <button onClick={() => setSelectedAnalysis(null)} style={{ padding: "8px 16px", cursor: "pointer" }}>
+                Close
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteId && (
+        <div
+          role="alertdialog"
+          aria-modal="true"
+          aria-labelledby="delete-dialog-title"
+          tabIndex={-1}
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0,0,0,0.6)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 9999,
+            padding: 20,
+          }}
+        >
+          <div
+            style={{
+              background: "#1e293b",
+              padding: "20px",
+              borderRadius: "8px",
+              textAlign: "center",
+              maxWidth: "90%",
+              width: "400px",
+              boxSizing: "border-box",
+            }}
+          >
+            <h3 id="delete-dialog-title">Are you sure you want to delete this analysis?</h3>
+            <p>This action cannot be undone.</p>
+            <div style={{ marginTop: "15px", display: "flex", justifyContent: "center", gap: "15px", flexWrap: "wrap" }}>
+              <button
+                onClick={() => handleDelete(deleteId)}
+                style={{ background: "darkred", color: "#fff", padding: "8px 16px", borderRadius: 4, cursor: "pointer" }}
+              >
+                Yes, Delete
+              </button>
+              <button
+                onClick={() => setDeleteId(null)}
+                style={{ padding: "8px 16px", borderRadius: 4, cursor: "pointer" }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  );
+  </div>
+);
+
 };
 
 export default SavedAnalyses;

@@ -137,6 +137,34 @@ const getFileColumns = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch columns", error: err.message });
   }
 };
+const SavedPDF = require("../models/SavedPDF");
+
+// ✅ Upload Generated PDF Report
+const uploadPDFReport = async (req, res) => {
+  try {
+    const { chartType, title, fileId } = req.body;
+
+    if (!req.file || req.file.mimetype !== "application/pdf") {
+      return res.status(400).json({ message: "Invalid or missing PDF file." });
+    }
+
+    const newPDF = new SavedPDF({
+      userId: req.user.id,
+      fileId,
+      chartType,
+      title,
+      pdfData: req.file.buffer,
+    });
+
+    await newPDF.save();
+
+    res.status(201).json({ message: "PDF uploaded and saved", id: newPDF._id });
+  } catch (err) {
+    console.error("[UPLOAD PDF ERROR]:", err);
+    res.status(500).json({ message: "PDF upload failed", error: err.message });
+  }
+};
+
 
 module.exports = {
   uploadFile,
@@ -145,4 +173,6 @@ module.exports = {
   getRecentFiles,
   getFileById,
   getFileColumns,
+  uploadPDFReport,
 };
+

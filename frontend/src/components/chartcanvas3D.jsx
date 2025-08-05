@@ -1,12 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import Plotly from "plotly.js-dist-min";
 
-const ChartCanvas3D = ({ chartType, chartData, chartTitle }) => {
-  const plotRef = useRef(null);
-
+const ChartCanvas3D = ({ chartType, chartData, chartTitle, plotlyRef }) => {
   useEffect(() => {
     if (
-      !plotRef.current ||
+      !plotlyRef?.current ||
       !chartData?.xData ||
       !chartData?.yData ||
       !chartData?.zData
@@ -20,7 +18,6 @@ const ChartCanvas3D = ({ chartType, chartData, chartTitle }) => {
     let traces = [];
 
     if (isLineChart) {
-      // ✅ 3D Line Chart
       traces = [
         {
           type: "scatter3d",
@@ -31,7 +28,7 @@ const ChartCanvas3D = ({ chartType, chartData, chartTitle }) => {
           marker: {
             size: 6,
             color: chartData.zData,
-            colorscale: "Turbo", // Versatile and vibrant
+            colorscale: "Turbo",
             opacity: 0.9,
           },
           line: {
@@ -42,7 +39,6 @@ const ChartCanvas3D = ({ chartType, chartData, chartTitle }) => {
         },
       ];
     } else {
-      // ✅ 3D Bar Simulation using vertical lines
       traces = chartData.xData.map((x, i) => ({
         type: "scatter3d",
         mode: "lines+markers",
@@ -63,42 +59,66 @@ const ChartCanvas3D = ({ chartType, chartData, chartTitle }) => {
     }
 
     const layout = {
-      title: chartTitle || "3D Chart",
+      title: {
+        text: chartTitle || "3D Chart",
+        font: {
+          size: 20,
+          color: "#000", // Black title for export clarity
+        },
+      },
       autosize: true,
       scene: {
-        xaxis: { title: "X Axis", gridcolor: "#444", zerolinecolor: "#888" },
-        yaxis: { title: "Y Axis", gridcolor: "#444", zerolinecolor: "#888" },
-        zaxis: { title: "Z Axis", gridcolor: "#444", zerolinecolor: "#888" },
-        bgcolor: "rgba(0,0,0,0.05)",
+        xaxis: {
+          title: "X Axis",
+          titlefont: { color: "#000" },
+          tickfont: { color: "#000" },
+          gridcolor: "#ccc",
+          zerolinecolor: "#aaa",
+        },
+        yaxis: {
+          title: "Y Axis",
+          titlefont: { color: "#000" },
+          tickfont: { color: "#000" },
+          gridcolor: "#ccc",
+          zerolinecolor: "#aaa",
+        },
+        zaxis: {
+          title: "Z Axis",
+          titlefont: { color: "#000" },
+          tickfont: { color: "#000" },
+          gridcolor: "#ccc",
+          zerolinecolor: "#aaa",
+        },
+        bgcolor: "#fff", // White scene background
       },
-      paper_bgcolor: "transparent",
-      plot_bgcolor: "transparent",
-      margin: { l: 0, r: 0, b: 0, t: 60 },
+      paper_bgcolor: "#fff", // White paper background
+      plot_bgcolor: "#fff",
       font: {
-        color: "#e2e8f0",
+        color: "#000", // Black font for readability
         family: "Segoe UI, sans-serif",
       },
+      margin: { l: 0, r: 0, b: 0, t: 60 },
     };
 
-    Plotly.newPlot(plotRef.current, traces, layout, {
+    Plotly.newPlot(plotlyRef.current, traces, layout, {
       responsive: true,
       displaylogo: false,
     });
 
     return () => {
-      if (plotRef.current) {
-        Plotly.purge(plotRef.current);
+      if (plotlyRef.current) {
+        Plotly.purge(plotlyRef.current);
       }
     };
-  }, [chartType, chartData, chartTitle]);
+  }, [chartType, chartData, chartTitle, plotlyRef]);
 
   return (
     <div
-      ref={plotRef}
+      ref={plotlyRef}
       style={{
         width: "100%",
         height: "500px",
-        backgroundColor: "transparent",
+        backgroundColor: "#fff",
         borderRadius: "12px",
         overflow: "hidden",
       }}
