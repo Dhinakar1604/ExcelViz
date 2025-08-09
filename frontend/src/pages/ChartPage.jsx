@@ -97,57 +97,134 @@ const downloadPDFReportFromBackend = async () => {
     return;
   }
 
- let chartImageBase64 = null;
+  let chartImageBase64 = null;
 
-if (chartType.includes("3D")) {
- 
-  try {
-    const plotlyDiv = plotly3DRef.current;
-    if (plotlyDiv) {
+  if (chartType.includes("3D")) {
+    try {
+      const plotlyDiv = plotly3DRef.current;
+      if (!plotlyDiv) {
+        alert("3D chart element not found.");
+        return;
+      }
+
+      // Temporarily switch to white background + black text for export
+      await window.Plotly.relayout(plotlyDiv, {
+        paper_bgcolor: "#ffffff",
+        plot_bgcolor: "#ffffff",
+        font: { color: "#000000" },
+        scene: {
+          bgcolor: "#ffffff",
+          xaxis: {
+            titlefont: { color: "#000000" },
+            tickfont: { color: "#000000" },
+            gridcolor: "#999999",
+          },
+          yaxis: {
+            titlefont: { color: "#000000" },
+            tickfont: { color: "#000000" },
+            gridcolor: "#999999",
+          },
+          zaxis: {
+            titlefont: { color: "#000000" },
+            tickfont: { color: "#000000" },
+            gridcolor: "#999999",
+          },
+        },
+      });
+
+      await new Promise((r) => setTimeout(r, 300));
+
       chartImageBase64 = await window.Plotly.toImage(plotlyDiv, {
         format: "png",
-        width: 500,
-        height: 400,
+        width: 800,
+        height: 500,
       });
-    } else {
-      alert("3D chart element not found.");
+
+      // Restore dark theme
+      await window.Plotly.relayout(plotlyDiv, {
+        paper_bgcolor: "transparent",
+        plot_bgcolor: "transparent",
+        font: { color: "#e2e8f0" },
+        scene: {
+          bgcolor: "rgba(0,0,0,0.05)",
+          xaxis: {
+            titlefont: { color: "#e2e8f0" },
+            tickfont: { color: "#e2e8f0" },
+            gridcolor: "#444",
+          },
+          yaxis: {
+            titlefont: { color: "#e2e8f0" },
+            tickfont: { color: "#e2e8f0" },
+            gridcolor: "#444",
+          },
+          zaxis: {
+            titlefont: { color: "#e2e8f0" },
+            tickfont: { color: "#e2e8f0" },
+            gridcolor: "#444",
+          },
+        },
+      });
+    } catch (err) {
+      console.error("Plotly 3D image export failed", err);
+      alert("Failed to export 3D chart image.");
       return;
     }
-  } catch (err) {
-    console.error("Plotly 3D image export failed", err);
-    alert("Failed to export 3D chart image.");
-    return;
-  }
-} else {
-  const chartCanvas = chartRef.current.querySelector("canvas");
-  chartImageBase64 = chartCanvas?.toDataURL("image/png");
-
-  if (!chartImageBase64) {
-    alert("2D chart image not available.");
-    return;
-  }
-}
-
-try {
-  const res = await axios.post(
-    "http://localhost:5000/api/analysis/download-report",
-    {
-      chartTitle,
-      summary,
-      excelData,
-      chartImageBase64,
-    },
-    {
-      headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-      responseType: "blob",
+  } else {
+    const canvasElem = chartRef.current.querySelector("canvas");
+    if (!canvasElem) {
+      alert("2D chart image not available.");
+      return;
     }
-  );
 
-  fileDownload(res.data, `${chartTitle || "chart-report"}.pdf`);
-} catch (err) {
-  console.error("Backend PDF download error", err);
-  alert("Failed to download PDF from backend.");
-}
+    const chartInstance = ChartJS.getChart(canvasElem);
+    if (!chartInstance) {
+      alert("Chart instance not found.");
+      return;
+    }
+chartInstance.options.plugins.legend = {
+  display: false, // or false to hide
+  position: "top",
+  labels: {
+    color: "#000", // legend text black for export
+    boxWidth: 20,
+    padding: 15,
+    font: {
+      size: 14,
+      weight: "bold",
+      family: "'Segoe UI', 'Arial', sans-serif"
+    }
+  }
+};
+
+    // Save original colors
+    const originalColors = {
+      xTick: chartInstance.options.scales.x.ticks.color,
+      yTick: chartInstance.options.scales.y.ticks.color,
+      xTitle: chartInstance.options.scales.x.title.color,
+      yTitle: chartInstance.options.scales.y.title.color,
+      title: chartInstance.options.plugins.title.color,
+    };
+chartInstance.options.plugins.legend.display = false;
+    // Switch to black text
+    chartInstance.options.scales.x.ticks.color = "#000";
+    chartInstance.options.scales.y.ticks.color = "#000";
+    chartInstance.options.scales.x.title.color = "#000";
+    chartInstance.options.scales.y.title.color = "#000";
+    chartInstance.options.plugins.title.color = "#000";
+    chartInstance.update();
+
+    await new Promise((res) => setTimeout(res, 100));
+
+    chartImageBase64 = canvasElem.toDataURL("image/png");
+
+    // Restore colors
+    chartInstance.options.scales.x.ticks.color = originalColors.xTick;
+    chartInstance.options.scales.y.ticks.color = originalColors.yTick;
+    chartInstance.options.scales.x.title.color = originalColors.xTitle;
+    chartInstance.options.scales.y.title.color = originalColors.yTitle;
+    chartInstance.options.plugins.title.color = originalColors.title;
+    chartInstance.update();
+  }
 
   try {
     const res = await axios.post(
@@ -160,7 +237,7 @@ try {
       },
       {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        responseType: "blob", 
+        responseType: "blob",
       }
     );
 
@@ -281,7 +358,6 @@ const generateChart = async () => {
     chartData,
   };
 
-  // ✅ Check for duplicate
   if (
     lastSavedAnalysis &&
     JSON.stringify(currentAnalysis) === JSON.stringify(lastSavedAnalysis)
@@ -394,21 +470,30 @@ const handleDownloadPNG = async () => {
     alert("3D chart element not found.");
     return;
   }
-  await window.Plotly.relayout(plotlyDiv, {
-    "paper_bgcolor": "#ffffff",
-    "plot_bgcolor": "#ffffff",
-    "font.color": "#000000",
-    "scene.bgcolor": "#ffffff",
-    "scene.xaxis.titlefont.color": "#000000",
-    "scene.xaxis.color": "#000000",
-    "scene.xaxis.gridcolor": "#999999",
-    "scene.yaxis.titlefont.color": "#000000",
-    "scene.yaxis.color": "#000000",
-    "scene.yaxis.gridcolor": "#999999",
-    "scene.zaxis.titlefont.color": "#000000",
-    "scene.zaxis.color": "#000000",
-    "scene.zaxis.gridcolor": "#999999",
-  });
+await window.Plotly.relayout(plotlyDiv, {
+  paper_bgcolor: "#ffffff",
+  plot_bgcolor: "#ffffff",
+  font: { color: "#000000" },
+  scene: {
+    bgcolor: "#ffffff",
+    xaxis: {
+      titlefont: { color: "#000000" },
+      tickfont: { color: "#000000" },
+      gridcolor: "#999999"
+    },
+    yaxis: {
+      titlefont: { color: "#000000" },
+      tickfont: { color: "#000000" },
+      gridcolor: "#999999"
+    },
+    zaxis: {
+      titlefont: { color: "#000000" },
+      tickfont: { color: "#000000" },
+      gridcolor: "#999999"
+    }
+  }
+});
+
 
   
   await new Promise((r) => setTimeout(r, 300));
@@ -535,27 +620,34 @@ const handleDownloadPDF = async () => {
     const padding = 30;
     let y = padding;
 
-    // 📌 Header
+    // 🟦 Centered Title
+    doc.setFont("helvetica", "bold")
+       .setFontSize(22)
+       .setTextColor(0, 51, 102);
+    const titleText = chartTitle || "Untitled Chart";
+    const textWidth = doc.getTextWidth(titleText);
+    doc.text(titleText, (pageWidth - textWidth) / 2, y);
+    y += 30;
+
+    // 🟦 Header with logo
     const headerCanvas = document.createElement("canvas");
-    const ctx = headerCanvas.getContext("2d");
     headerCanvas.width = 600;
     headerCanvas.height = 100;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, headerCanvas.width, headerCanvas.height);
+    const ctx = headerCanvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, 600, 100);
     ctx.drawImage(logo, 20, 20, 60, 60);
     ctx.fillStyle = "#333";
     ctx.font = "bold 24px 'Segoe UI'";
-    ctx.fillText(chartTitle || "Chart Report", 100, 60);
+    ctx.fillText(titleText, 100, 60);
     const headerImg = headerCanvas.toDataURL("image/png");
     doc.addImage(headerImg, "PNG", padding, y, 400, 80);
     y += 100;
 
-    // 🧾 Chart Meta
+    // 🟨 Metadata
     doc.setFontSize(12).setTextColor(0, 0, 0);
-    doc.text(`Chart Type: ${chartType}`, padding, y);
-    y += 18;
-    doc.text(`X-Axis: ${xAxis}`, padding, y);
-    y += 18;
+    doc.text(`Chart Type: ${chartType}`, padding, y); y += 18;
+    doc.text(`X-Axis: ${xAxis}`, padding, y); y += 18;
     doc.text(`Y-Axis: ${Array.isArray(yAxis) ? yAxis.join(", ") : yAxis}`, padding, y);
     if (chartType.includes("3D") && zAxis) {
       y += 18;
@@ -563,134 +655,189 @@ const handleDownloadPDF = async () => {
     }
     y += 20;
 
+    // 🟩 Chart Export
     let chartImageData;
     let imgWidth = 500;
     let imgHeight = 400;
-
-    // 🔄 Get chart image
     if (chartType.includes("3D")) {
-      const plotlyDiv = plotly3DRef.current;
-      if (!plotlyDiv) return alert("3D chart element missing");
+  const plotlyDiv = plotly3DRef.current;
+  await window.Plotly.relayout(plotlyDiv, {
+    margin: { l: 80, r: 80, t: 40, b: 80 },
+    paper_bgcolor: "#ffffff",
+    plot_bgcolor: "#ffffff",
+    font: { color: "#000" },
+    scene: {
+      xaxis: { titlefont: { color: "#000" }, tickfont: { color: "#000" }, gridcolor: "#ccc" },
+      yaxis: { titlefont: { color: "#000" }, tickfont: { color: "#000" }, gridcolor: "#ccc" },
+      zaxis: { titlefont: { color: "#000" }, tickfont: { color: "#000" }, gridcolor: "#ccc" },
+    }
+  });
 
-      await window.Plotly.relayout(plotlyDiv, {
-        margin: { l: 80, r: 80, t: 40, b: 80 },
-        paper_bgcolor: "#ffffff",
-        plot_bgcolor: "#ffffff",
-        font: { color: "#000" },
-        scene: {
-          xaxis: { titlefont: { color: "#000" }, tickfont: { color: "#000" }, gridcolor: "#ccc" },
-          yaxis: { titlefont: { color: "#000" }, tickfont: { color: "#000" }, gridcolor: "#ccc" },
-          zaxis: { titlefont: { color: "#000" }, tickfont: { color: "#000" }, gridcolor: "#ccc" },
-        },
-      });
+  // 🔹 Hide the color scale completely
+  plotlyDiv.data.forEach((trace) => {
+    if (trace.marker && trace.marker.showscale !== undefined) {
+      trace.marker.showscale = false;
+    }
+    if (trace.showscale !== undefined) {
+      trace.showscale = false;
+    }
+  });
 
-      await new Promise((r) => setTimeout(r, 300));
+  await new Promise((r) => setTimeout(r, 300));
+  chartImageData = await window.Plotly.toImage(plotlyDiv, {
+    format: "png",
+    width: 800,
+    height: 500,
+  });
+  imgWidth = 800;
+  imgHeight = 500;
+}
 
-      const exportWidth = 450;
-      const exportHeight = 340;
-
-      chartImageData = await window.Plotly.toImage(plotlyDiv, {
-        format: "png",
-        width: exportWidth,
-        height: exportHeight,
-      });
-
-      imgWidth = exportWidth;
-      imgHeight = exportHeight;
-
-    } else {
+    else {
       const canvasElem = chartRef.current?.querySelector("canvas");
-if (!canvasElem) return alert("Chart canvas missing");
+      if (!canvasElem) return alert("Chart canvas missing");
+      const chartInstance = ChartJS.getChart(canvasElem);
+      if (!chartInstance) return alert("Chart instance not found");
 
-const chartInstance = ChartJS.getChart(canvasElem);
-if (!chartInstance) return alert("Chart instance not found");
+      const scaleFactor = 5;
+      const width = 800;
+      const height = 500;
 
-// Temporarily apply export-friendly style
-chartInstance.options.plugins.title.display = false;
-chartInstance.options.plugins.title.color = "#000";
-chartInstance.options.scales.x.ticks.color = "#000";
-chartInstance.options.scales.y.ticks.color = "#000";
-chartInstance.options.scales.x.title.color = "#000";
-chartInstance.options.scales.y.title.color = "#000";
-chartInstance.options.scales.x.grid.color = "#999";
-chartInstance.options.scales.y.grid.color = "#999";
-chartInstance.update();
-await new Promise((r) => setTimeout(r, 100));
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = width * scaleFactor;
+      tempCanvas.height = height * scaleFactor;
+      tempCanvas.style.width = `${width}px`;
+      tempCanvas.style.height = `${height}px`;
 
-// Create padded export canvas
-const exportCanvas = document.createElement("canvas");
-const paddingSpace = 40;
-exportCanvas.width = canvasElem.width + paddingSpace * 2;
-exportCanvas.height = canvasElem.height + paddingSpace * 2;
+      const tempCtx = tempCanvas.getContext("2d");
+      tempCtx.setTransform(scaleFactor, 0, 0, scaleFactor, 0, 0);
+      tempCtx.imageSmoothingEnabled = false;
+const clonedChartConfig = JSON.parse(JSON.stringify(chartInstance.config));
 
-const exportCtx = exportCanvas.getContext("2d");
-exportCtx.fillStyle = "#ffffff"; // ensure white background
-exportCtx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-exportCtx.drawImage(canvasElem, paddingSpace, paddingSpace);
+// Keep dataset labels as they are (so legend shows)
+clonedChartConfig.data.datasets = clonedChartConfig.data.datasets.map(ds => ({
+  ...ds,
+  label: ds.label || "Dataset" // fallback label if missing
+}));
 
-// Capture final image
-chartImageData = exportCanvas.toDataURL("image/png");
-imgWidth = exportCanvas.width;
-imgHeight = exportCanvas.height;
+clonedChartConfig.options = {
+  ...clonedChartConfig.options,
+  responsive: false,
+  animation: false,
+  plugins: {
+    legend: {
+      display: true, // Show legend
+      position: "top", // Move to top
+      labels: {
+        color: "#000", // Black text
+        boxWidth: 20,  // Smaller color box
+        padding: 15,   // Spacing between items
+        font: {
+          size: 14,
+          weight: "bold",
+          family: "'Segoe UI', 'Arial', sans-serif"
+        }
+      }
+    },
+    title: { display: false } // Keep title off inside chart area
+  },
+  scales: {
+    x: {
+      ...clonedChartConfig.options.scales.x,
+      ticks: {
+        color: "#000",
+        font: {
+          size: 18,
+          weight: "bold",
+          family: "'Segoe UI', 'Arial', sans-serif"
+        },
+      },
+      title: {
+        display: true,
+        color: "#000",
+        font: {
+          size: 18,
+          weight: "bold",
+          family: "'Segoe UI', 'Arial', sans-serif"
+        },
+      },
+      grid: { color: "#ccc" }
+    },
+    y: {
+      ...clonedChartConfig.options.scales.y,
+      ticks: {
+        color: "#000",
+        font: {
+          size: 18,
+          weight: "bold",
+          family: "'Segoe UI', 'Arial', sans-serif"
+        },
+      },
+      title: {
+        display: true,
+        color: "#000",
+        font: {
+          size: 18,
+          weight: "bold",
+          family: "'Segoe UI', 'Arial', sans-serif"
+        },
+      },
+      grid: { color: "#ccc" }
+    }
+  }
+};
 
-      imgWidth = exportCanvas.width / 2;
-      imgHeight = exportCanvas.height / 2;
+      await document.fonts.ready;
+      const tempChart = new Chart(tempCtx, {
+        type: chartInstance.config.type,
+        data: clonedChartConfig.data,
+        options: clonedChartConfig.options
+      });
 
-      // 🔁 Restore styles
-      chartInstance.options.plugins.title.display = originalOptions.titleDisplay;
-      chartInstance.options.plugins.title.color = originalOptions.titleColor;
-      chartInstance.options.scales.x.ticks.color = originalOptions.xTickColor;
-      chartInstance.options.scales.y.ticks.color = originalOptions.yTickColor;
-      chartInstance.options.scales.x.title.color = originalOptions.xTitleColor;
-      chartInstance.options.scales.y.title.color = originalOptions.yTitleColor;
-      chartInstance.options.scales.x.grid.color = originalOptions.xGridColor;
-      chartInstance.options.scales.y.grid.color = originalOptions.yGridColor;
-      chartInstance.update();
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      chartImageData = tempCanvas.toDataURL("image/png");
+      imgWidth = tempCanvas.width / scaleFactor;
+      imgHeight = tempCanvas.height / scaleFactor;
+      tempChart.destroy();
     }
 
-    // 🖼️ Scale image to fit PDF
+    // 🖼️ Draw chart image
     const aspectRatio = imgWidth / imgHeight;
     let displayWidth = pageWidth - padding * 2;
     let displayHeight = displayWidth / aspectRatio;
-
-    if (displayHeight > pageHeight / 2) {
-      displayHeight = pageHeight / 2;
+    if (displayHeight > 400) {
+      displayHeight = 400;
       displayWidth = displayHeight * aspectRatio;
     }
-
     if (y + displayHeight > pageHeight - padding) {
       doc.addPage();
       y = padding;
     }
-
     const xCentered = (pageWidth - displayWidth) / 2;
     doc.addImage(chartImageData, "PNG", xCentered, y, displayWidth, displayHeight);
     y += displayHeight + 20;
 
     // 🧠 AI Summary
     doc.setFontSize(14).setTextColor(40, 40, 40);
-    doc.text("🧠 AI Summary", padding, y);
-    y += 18;
+    doc.text("🧠 AI Summary", padding, y); y += 18;
     doc.setFontSize(11).setTextColor(60);
     const summaryText = summaryRef.current?.innerText || "";
     const lines = summaryText.split("\n");
     for (const line of lines) {
       const split = doc.splitTextToSize(line, pageWidth - padding * 2);
       if (y + split.length * 15 >= pageHeight - padding) {
-        doc.addPage();
-        y = padding;
+        doc.addPage(); y = padding;
       }
       doc.text(split, padding, y);
       y += split.length * 15;
     }
 
-    // 📋 Excel Table
+    // 📋 Excel Data
     if (excelData?.length && typeof excelData[0] === "object") {
       if (y >= pageHeight - 140) {
         doc.addPage();
         y = padding;
       }
-
       doc.setFontSize(14).setTextColor(40, 40, 40);
       y += 20;
       doc.text("📋 Data Table (Top Rows)", padding, y);
@@ -712,28 +859,12 @@ imgHeight = exportCanvas.height;
       });
     }
 
-    // 💾 Upload to Server
-    const pdfBlob = doc.output("blob");
-    const formData = new FormData();
-    formData.append("pdf", pdfBlob, `${chartTitle || "chart-report"}.pdf`);
-    formData.append("title", chartTitle);
-    formData.append("fileId", selectedFile);
-    formData.append("chartType", chartType);
-
-    await axios.post("http://localhost:5000/api/analysis/upload-pdf", formData, {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
     doc.save(`${chartTitle || "chart-report"}.pdf`);
   } catch (err) {
     console.error("📄 PDF generation error:", err);
     alert("Something went wrong while exporting PDF.");
   }
 };
-
 
 return (
     <div className="chart-page">

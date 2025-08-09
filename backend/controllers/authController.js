@@ -67,6 +67,11 @@ exports.login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
 
+    // Blocked user check
+    if (user.blocked) {
+      return res.status(403).json({ message: "Your account is blocked. Please contact admin." });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid email or password' });
@@ -110,6 +115,11 @@ exports.adminLogin = async (req, res) => {
     const user = await User.findOne({ email: email.toLowerCase() });
     if (!user || user.role !== 'admin') {
       return res.status(403).json({ message: 'Access denied: Not an admin or user not found' });
+    }
+
+    // Blocked user check for admin as well (optional)
+    if (user.blocked) {
+      return res.status(403).json({ message: "Your account is blocked. Please contact admin." });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);

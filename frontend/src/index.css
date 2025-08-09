@@ -1,9 +1,8 @@
-/* 🧠 Tailwind must be declared first */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Your global styles */
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

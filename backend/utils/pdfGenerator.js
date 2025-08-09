@@ -6,7 +6,7 @@ const path = require("path");
  * Generate a complete PDF report with chart, summary, and top rows from Excel data.
  * @param {string} outputPath - Absolute path to save PDF
  * @param {string} chartTitle - Title of the chart
- * @param {Buffer} imageBuffer - Buffer or base64 chart image
+ * @param {Buffer|string} imageBuffer - Chart image (Buffer or base64 string)
  * @param {string} summary - AI summary text
  * @param {Array<Object>} dataTable - Parsed Excel rows (JSON array)
  */
@@ -31,7 +31,7 @@ function generateChartPDF(outputPath, chartTitle, imageBuffer, summary, dataTabl
     .stroke();
   };
 
-  drawPageBorder(doc);
+  drawPageBorder();
   doc.on("pageAdded", drawPageBorder);
 
   // 📌 Header Logo and Title
@@ -54,26 +54,39 @@ function generateChartPDF(outputPath, chartTitle, imageBuffer, summary, dataTabl
     .text(chartTitle || "Untitled Chart", { align: "center" })
     .moveDown(1.5);
 
-  // 📊 Chart image
+
   if (imageBuffer) {
     try {
-      const usableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-      const image = Buffer.isBuffer(imageBuffer)
-        ? imageBuffer
-        : Buffer.from(imageBuffer.toString("base64"), "base64");
+      const image =
+        Buffer.isBuffer(imageBuffer)
+          ? imageBuffer
+          : Buffer.from(imageBuffer.toString("base64"), "base64");
 
       doc.image(image, {
-        fit: [400, 200],
+        fit: [400, 250], 
         align: "center",
         valign: "center",
       });
+
       doc.moveDown(2);
     } catch (err) {
       console.error("⚠️ Error embedding chart image:", err);
+      doc
+        .font("Helvetica-Oblique")
+        .fillColor("#cc0000")
+        .fontSize(12)
+        .text("⚠️ Chart image could not be displayed.", { align: "center" })
+        .moveDown(2);
     }
+  } else {
+    doc
+      .font("Helvetica-Oblique")
+      .fillColor("#cc0000")
+      .fontSize(12)
+      .text("⚠️ Chart image not provided.", { align: "center" })
+      .moveDown(2);
   }
 
-  // 🧠 AI Summary
   if (summary) {
     const cleanSummary = summary.replace(/[^\x00-\x7F]/g, " ");
     doc
@@ -96,7 +109,6 @@ function generateChartPDF(outputPath, chartTitle, imageBuffer, summary, dataTabl
     doc.moveDown(2);
   }
 
-  // 📋 Excel Table (Top 10 Rows)
   if (Array.isArray(dataTable) && dataTable.length > 0) {
     const headers = Object.keys(dataTable[0]);
     const maxRows = Math.min(10, dataTable.length);
@@ -114,7 +126,7 @@ function generateChartPDF(outputPath, chartTitle, imageBuffer, summary, dataTabl
       .text("Source Excel Data (Top 10 Rows)", { underline: true })
       .moveDown(1);
 
-    // Headers
+
     headers.forEach((key, i) => {
       doc
         .rect(startX + i * colWidth, y, colWidth, 20)
@@ -129,7 +141,7 @@ function generateChartPDF(outputPath, chartTitle, imageBuffer, summary, dataTabl
 
     y += 20;
 
-    // Rows
+   
     for (let r = 0; r < maxRows; r++) {
       const row = dataTable[r];
       headers.forEach((key, i) => {

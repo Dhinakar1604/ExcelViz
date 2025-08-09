@@ -257,6 +257,21 @@
     transform: translateY(0);
   }
 }
+canvas {
+  image-rendering: pixelated; 
+}
+
+.chart-display canvas {
+  max-width: 100%;
+  height: auto;
+  font-weight: bold !important;
+}
+
+.chart-display {
+  font-smooth: never;
+  -webkit-font-smoothing: none;
+}
+
 
 @media (max-width: 992px) {
   .chart-container {
